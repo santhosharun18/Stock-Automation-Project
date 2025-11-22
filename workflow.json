@@ -1,0 +1,124 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "82d2b5ac-b995-4b1f-b676-7b88038eb18b",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://api.twelvedata.com/quote?symbol=AAPL,MSFT,GOOGL&apikey=afb1ecaed99b4995b260f29830b16cb5",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "95058df1-fbbd-4bd3-bd6b-77bb4d9c8cbb",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Convert object of symbols into array of items\nconst data = items[0].json; // whole response object (e.g., { AAPL: {...}, MSFT: {...} })\n\nconst output = [];\n\nfor (const symbol in data) {\n  const d = data[symbol];\n\n  output.push({\n    json: {\n      symbol: d.symbol,\n      name: d.name,\n      currency: d.currency,\n      exchange: d.exchange,\n\n      // Price fields from TwelveData\n      open: d.open,\n      high: d.high,\n      low: d.low,\n      close: d.close,\n      previous_close: d.previous_close,\n      volume: d.volume,\n\n      // Timestamp\n      date: new Date().toISOString()\n    }\n  });\n}\n\nreturn output;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        352,
+        48
+      ],
+      "id": "0bc3455f-85c8-4ff9-90e8-b29749939012",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "stocks",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        560,
+        48
+      ],
+      "id": "c913fc91-ba20-4ee8-9257-dd32635f5ab6",
+      "name": "Insert documents",
+      "credentials": {
+        "mongoDb": {
+          "id": "dgwTrZFMKzYMxH5y",
+          "name": "MongoDB account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Insert documents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert documents": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "88560f10-634c-49a9-ad7e-0f6627ae0640",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d0f79515d884f594bbfcb5b970c165114b0006008438c503604335e799fd73d0"
+  },
+  "id": "1wlmL1XpcDNBtONE",
+  "tags": []
+}
